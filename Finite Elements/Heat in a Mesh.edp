@@ -1,0 +1,28 @@
+// Define mesh boundary
+border C(t=4*pi/6, 8*pi/6){x=2*cos(t)+1; y=2*sin(t);}
+border D(t=-1*pi/3, pi/3){x=2*cos(t)-1; y=2*sin(t);}
+
+// The triangulated domain Th is on the left side of its boundary
+mesh Th = buildmesh(C(150) +D(150));
+
+plot(Th, wait=true);
+
+// The finite element space defined over Th is called here Vh
+fespace Vh(Th, P1);
+Vh u, v;// Define u and v as piecewise-P1 continuous functions
+
+// Define a function f
+func f= x*y;
+
+// Define the PDE
+	solve CalorEstacionarioMixtas(u, v, solver=LU)
+	    = int2d(Th)(    
+	        (dx(u)*dx(v) + dy(u)*dy(v))
+	    )
+
+	    + on(D, u=cos(10*x^2)); 			//Condición de Dirichlet del radiador
+
+
+plot(u, wait=true, fill=1);
+// Plot the result
+

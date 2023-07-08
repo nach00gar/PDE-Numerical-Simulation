@@ -1,0 +1,48 @@
+// En primer lugar, definimos los bordes en forma de t parametrizando en sentido antihorario
+
+
+border a(t=0, 1){x=-1+2*t; y=0; label=1;}
+border b(t=0, 1){x=1; y=t; label=2;}
+border c(t=0, 1){ x=1+2*t; y=1; label=3;}
+border d(t=0, 1){ x=3; y=1+t; label=4;}
+border e(t=0, 1){x=3-6*t; y=2; label=5;}
+border f(t=0, 1){x=-3; y=2-t; label=6;}
+border g(t=0, 1){x=-3+2*t; y=1; label=7;}
+border h(t=0, 1){x=-1; y=1-t; label=8;}
+
+// Luego, generamos el mallado, para que la malla sea uniforme debemos elegir valores proporcionales a las longitudes de los lados
+mesh th = buildmesh(a(30) + b(15) + c(30) + d(15) + e(90)+ f(15) + g(30) + h(15));
+plot(th, wait=true);
+// Fespace
+fespace Vh(th, [P1, P1]);
+Vh [uu, vv];
+Vh [w, s];
+
+
+// Macros
+real sqrt2 = sqrt(2.);
+macro epsilon(u1, u2) [dx(u1), dy(u2), (dy(u1)+dx(u2))/sqrt2] //
+macro div(u,v) (dx(u) + dy(v)) //
+
+// Definimos los parámetros de Lamé
+real mu = 8;
+real lambda = 11;
+solve Elasticity ([uu, vv], [w, s])
+    = int2d(th)(
+          lambda*div(w,s)*div(uu,vv)
+        + 2.*mu*( epsilon(w,s)'*epsilon(uu,vv) )
+    )
+//    + int2d(th)(      //He desactivado la gravedad
+//        - gravity*s 
+//   )
+    + on(1, uu=0, vv=0) //Fijo el lado de abajo
+    + on(5, uu=0, vv=-0.75)//Aplasto a 3/4 de la altura original (3) desde arriba
+;
+
+// Dibujamos el campo de vectores
+plot([uu, vv], wait=true);
+
+
+// Dibujamos el resultado de aplicar el movimiento
+mesh th1 = movemesh(th, [x+uu, y+vv]);
+plot(th1, wait=true);

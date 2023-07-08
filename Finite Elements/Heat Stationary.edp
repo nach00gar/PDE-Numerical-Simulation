@@ -1,0 +1,106 @@
+cout << "Coloca el radiador en alguna de estas posiciones, introduce un numero:"<<"\n";
+cout << "1 En la parte superior derecha"<<"\n";
+cout << "2 En la parte inferior izquierda"<<"\n";
+cout << "3 En el centro"<<"\n";
+int opcion;
+cin >> opcion;
+//Definimos la pared de la habitación y la ventana parametrizando en sentido antihorario
+border p1(t=0.,5.){x=t; y=0;label=1;};
+border p2(t=0.,5.){x=5; y=t;label=1;};
+border p3(t=0.,1.){x=5-1.5*t; y=5;label=1;};
+border v(t=0.,1.){x=3.5-2*t; y=5;label=2;}; //Ventana
+border p4(t=0.,1.){x=1.5-1.5*t; y=5;label=1;};
+border p5(t=0.,5.){x=0; y=5-t;label=1;};
+
+//Como el "wrapper" de C++ que utiliza Freefem necesita que todas las variables esten definidas en tiempo de compilación en todo flujo. Tendré que repetir código despues de elegir radiador
+
+//Los resultados para la temperatura media son 16.7, 20.48 y 22.83 luego el lugar mas adecuado parece ser el centro de la habitación de entre las 3 opciones elegidas. Aunque quizá podría ser mejor una posición central pero algo más alejada de la ventana.
+
+if(opcion==1){
+	//Defino el radiador en sentido horario
+	border r1(t=0,1.0){x=4.5-t; y=3.5; label=3;};
+	border r2(t=0,1.0){x=3.5; y=3.5+t;label=3;};
+	border r3(t=0,1.0){x=3.5+t; y=4.5;label=3;};
+	border r4(t=0,1.0){x=4.5; y=4.5-t;label=3;};
+		
+	//Defino el mallado
+	mesh Th = buildmesh(p1(30) + p2(30) + p3(12) + v(6) + p4(12) + p5(30) + r1(10) + r2(10) + r3(10) + r4(10));
+	//Defino el espacio de funciones lineales a trozos en el espacio del mallado
+	fespace Vh(Th, P1);
+	Vh u, v;
+
+	solve CalorEstacionarioMixtas(u, v, solver=LU)
+	    = int2d(Th)(    
+	        (dx(u)*dx(v) + dy(u)*dy(v))
+	    )
+	    + int1d(Th, 1)(0.5*u*v)	//Condiciones de Robin de paredes
+	    + int1d(Th, 2)(2*u*v)	//Condiciones de Robin de ventanas
+	    + on(3, u=50); 			//Condición de Dirichlet del radiador
+
+
+	real area = 24; 
+
+	real tmedia = (1/area)*int2d(Th)(u);
+	cout<<"Temperatura Media ="<< tmedia <<"\n";
+
+	plot(u, wait=true, fill=1);
+}
+
+if(opcion==2){
+	border r1(t=0,1.0){x=2-t; y=1; label=3;};
+	border r2(t=0,1.0){x=1; y=1+t;label=3;};
+	border r3(t=0,1.0){x=1+t; y=2;label=3;};
+	border r4(t=0,1.0){x=2; y=2-t;label=3;};
+
+
+	mesh Th = buildmesh(p1(30) + p2(30) + p3(12) + v(6) + p4(12) + p5(30) + r1(10) + r2(10) + r3(10) + r4(10));
+	fespace Vh(Th, P1);
+	Vh u, v;
+
+	solve CalorEstacionarioMixtas(u, v, solver=LU)
+	    = int2d(Th)(    
+	        (dx(u)*dx(v) + dy(u)*dy(v))
+	    )
+	    + int1d(Th, 1)(0.5*u*v)
+	    + int1d(Th, 2)(2*u*v)
+	    + on(3, u=50); 
+
+
+	real area = 24; 
+
+	real tmedia = (1/area)*int2d(Th)(u);
+	cout<<"Temperatura Media ="<< tmedia <<"\n";
+
+	plot(u, wait=true, fill=1);
+}
+
+if(opcion==3){
+	border r1(t=0,1.0){x=3-t; y=2; label=3;};
+	border r2(t=0,1.0){x=2; y=2+t;label=3;};
+	border r3(t=0,1.0){x=2+t; y=3;label=3;};
+	border r4(t=0,1.0){x=3; y=3-t;label=3;};
+
+	mesh Th = buildmesh(p1(30) + p2(30) + p3(12) + v(6) + p4(12) + p5(30) + r1(10) + r2(10) + r3(10) + r4(10));
+	fespace Vh(Th, P1);
+	Vh u, v;
+
+	solve CalorEstacionarioMixtas(u, v, solver=LU)
+	    = int2d(Th)(    
+	        (dx(u)*dx(v) + dy(u)*dy(v))
+	    )
+	    + int1d(Th, 1)(0.5*u*v)
+	    + int1d(Th, 2)(2*u*v)
+	    + on(3, u=50); 
+
+
+	real area = 24; 
+
+	real tmedia = (1/area)*int2d(Th)(u);
+	cout<<"Temperatura Media ="<< tmedia <<"\n";
+
+	plot(u, wait=true, fill=1);
+}
+
+
+
+

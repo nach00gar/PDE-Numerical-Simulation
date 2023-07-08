@@ -1,0 +1,64 @@
+real tiempo = 200.0; //Tiempo final
+real nodos = 500; //Partición
+real h = tiempo / nodos; //Tamaño de paso
+real dt = 1/h; 
+
+//Definimos la pared de la habitación y la ventana parametrizando en sentido antihorario
+border p1(t=0.,5.){x=t; y=0;label=1;};
+border p2(t=0.,5.){x=5; y=t;label=1;};
+border p3(t=0.,1.){x=5-1.5*t; y=5;label=1;};
+border vent(t=0.,1.){x=3.5-2*t; y=5;label=2;}; //Ventana
+border p4(t=0.,1.){x=1.5-1.5*t; y=5;label=1;};
+border p5(t=0.,5.){x=0; y=5-t;label=1;};
+
+	//Defino el mallado
+	mesh Th = buildmesh(p1(90) + p2(90) + p3(27) + vent(36) + p4(27) + p5(90));
+	savemesh(Th, "mesh.msh");
+	//plot(Th, wait=true);
+	//Defino el espacio de funciones lineales a trozos en el espacio del mallado
+	fespace Vh(Th, P1);
+	Vh u, v, uold, u0=20; //Defino la condición inicial
+
+	problem CalorMixtas(u, v, init=1)
+	    = int2d(Th)(    
+	        (dx(u)*dx(v) + dy(u)*dy(v))
+	    )
+		+ int2d(Th)(    
+	        dt*v*u
+	    )
+		- int2d(Th)(    
+	        dt*v*uold
+	    )
+		+ int1d(Th, 2)(0.5*u*v)	- int1d(Th, 2)(0.5*10*v); //Condiciones de Robin de ventanas
+
+// Iteraciones en tiempo 
+u = u0;
+real[int] colorhsv=[ // color hsv model
+   4./6., 1 , 0.5, // dark blue
+   4./6., 1 , 1, // blue
+   5./6., 1 , 1, // magenta
+   1, 1. , 1, // red
+   1, 0.5 , 1 // light red
+   ];
+ real[int] viso(21);
+
+ for (int i = 0; i < 21; i++)
+   viso[i] = 10+i/2.0;
+
+ real[int] temps(nodos);
+ real area = 25; //Área del cuadrado de lado 5
+ string leyenda;
+
+for (int i = 0; i < nodos; ++i){
+  uold = u;
+  CalorMixtas;
+  real tmedia = (1/area)*int2d(Th)(u);
+  temps[i]=tmedia;
+  leyenda="Tiempo t = " + string((i+1)*h) + " Temperatura media = " +string(tmedia);
+  plot(u, fill = true, dim = 2, value=1, wait = 1, viso=viso(0:viso.n-1), hsv=colorhsv, cmm=leyenda);
+} 
+for (int i = 0; i < nodos; ++i){
+  cout << h*(i+1) << "," << temps[i] <<"\n";
+} 
+	
+
